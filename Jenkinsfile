@@ -15,10 +15,6 @@ pipeline {
   stages {
     stage('Checkout') {
       steps { checkout scm }
-      script {
-        // en Windows
-        bat(script: 'npm run format:check', returnStatus: true)
-      }
     }
 
     stage('Install dependencies') {
