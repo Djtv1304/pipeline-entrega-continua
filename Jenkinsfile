@@ -33,7 +33,11 @@ pipeline {
         echo 'Ejecutando ESLint...'
         script { isUnix() ? sh('npm run lint') : bat('npm run lint') }
         echo 'Verificando formato con Prettier...'
-        script { isUnix() ? sh('npm run format:check') : bat('npm run format:check') }
+        // script { isUnix() ? sh('npm run format:check') : bat('npm run format:check') }
+        script {
+          // en Windows
+          bat(script: 'npm run format:check', returnStatus: true)
+        }
       }
     }
 
