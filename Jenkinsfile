@@ -55,7 +55,7 @@ pipeline {
     success {
       echo 'Notificando éxito por email (Gmail configurado en Jenkins).'
       emailext(
-        to: env.EMAIL_TO ?: 'tu-correo@gmail.com',
+        to: env.EMAIL_TO ?: 'diegosebastia94@gmail.com',
         subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
         body: "El build fue exitoso. Revisión: ${env.GIT_COMMIT}\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
       )
@@ -63,7 +63,7 @@ pipeline {
     failure {
       echo 'Notificando fallo por email (Gmail configurado en Jenkins).'
       emailext(
-        to: env.EMAIL_TO ?: 'tu-correo@gmail.com',
+        to: env.EMAIL_TO ?: 'diegosebastia94@gmail.com',
         subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
         body: "El build falló. Revisión: ${env.GIT_COMMIT}\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}",
         attachLog: true
