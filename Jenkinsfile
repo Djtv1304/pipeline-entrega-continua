@@ -74,6 +74,7 @@ pipeline {
     failure {
       echo 'Notificando fallo por email (Gmail configurado en Jenkins).'
       emailext(
+        from: 'diegosebastia94@gmail.com',
         to: env.EMAIL_TO ?: 'diegosebastia94@gmail.com',
         subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
         body: "El build falló. Revisión: ${env.GIT_COMMIT}\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}",
