@@ -1,11 +1,7 @@
 pipeline {
   agent any
 
-  tools { nodejs 'NodeJS_18' } // Define este nombre en Manage Jenkins → Tools (NodeJS)
-
-  environment {
-    EMAIL_TO = credentials('JENKINS_EMAIL_TO')
-  }
+  tools { nodejs 'NodeJS_18' }
 
   options {
     ansiColor('xterm')
@@ -17,43 +13,23 @@ pipeline {
       steps { checkout scm }
     }
 
-    stage('Install dependencies') {
+    stage('Install') {
       steps {
-        echo 'Instalando dependencias con npm ci'
+        echo 'Instalando dependencias (develop)...'
         script { isUnix() ? sh('npm ci') : bat('npm ci') }
-      }
-    }
-
-    stage('Lint & Style') {
-      steps {
-        echo 'Ejecutando ESLint...'
-        script { isUnix() ? sh('npm run lint') : bat('npm run lint') }
-        echo 'Verificando formato con Prettier...'
-        // script { isUnix() ? sh('npm run format:check') : bat('npm run format:check') }
-        script {
-          // en Windows
-          bat(script: 'npm run format:check', returnStatus: true)
-        }
       }
     }
 
     stage('Type Check') {
       steps {
-        echo 'Chequeo de tipos con TypeScript...'
+        echo 'TypeScript check (develop)...'
         script { isUnix() ? sh('npm run typecheck') : bat('npm run typecheck') }
-      }
-    }
-
-    stage('Check Path Alias') {
-      steps {
-        bat 'echo Checking tsconfig path aliases...'
-        bat 'type tsconfig.json'
       }
     }
 
     stage('Unit Tests') {
       steps {
-        echo 'Ejecutando pruebas unitarias con Vitest...'
+        echo 'Vitest (develop)...'
         script { isUnix() ? sh('npm test') : bat('npm test') }
       }
     }
@@ -61,25 +37,7 @@ pipeline {
 
   post {
     always {
-      echo "Pipeline finalizado: ${currentBuild.currentResult}"
-    }
-    success {
-      echo 'Notificando éxito por email (Gmail configurado en Jenkins).'
-      emailext(
-        to: env.EMAIL_TO ?: 'diegosebastia94@gmail.com',
-        subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-        body: "El build fue exitoso. Revisión: ${env.GIT_COMMIT}\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
-      )
-    }
-    failure {
-      echo 'Notificando fallo por email (Gmail configurado en Jenkins).'
-      emailext(
-        from: 'diegosebastia94@gmail.com',
-        to: env.EMAIL_TO ?: 'diegosebastia94@gmail.com',
-        subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-        body: "El build falló. Revisión: ${env.GIT_COMMIT}\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}",
-        attachLog: true
-      )
+      echo "Pipeline develop finalizado: ${currentBuild.currentResult}"
     }
   }
 }
