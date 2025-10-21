@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validatePayload, subtractNumbers } from "@/src/lib/math";
+import { validatePayload, subtractNumbers } from "../../../src/lib/math";
 
 export async function POST(req: Request) {
   try {
