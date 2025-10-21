@@ -44,6 +44,13 @@ pipeline {
       }
     }
 
+    stage('Check Path Alias') {
+      steps {
+        bat 'echo Checking tsconfig path aliases...'
+        bat 'type tsconfig.json'
+      }
+    }
+
     stage('Unit Tests') {
       steps {
         echo 'Ejecutando pruebas unitarias con Vitest...'
