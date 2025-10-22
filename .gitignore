@@ -13,9 +13,6 @@ coverage/
 .next
 out
 
-#Jenkins Files
-Jenkinsfile
-
 # Production
 /build
 dist/
