@@ -54,27 +54,26 @@ jobs:
     docker:
       - image: cimg/node:18.20
     environment:
-      # Valores de entorno útiles para el script de notificación
       REPO_NAME: << pipeline.project.git_url >>
     steps:
       - checkout
       - run: npm ci
+
       - run:
           name: Ejecutar pruebas con Vitest
           command: npm test
 
       # ---------- Notificaciones por EMAIL ----------
-      # Creamos un pequeño script JS con nodemailer
       - run:
-          name: Preparar script de notificación
+          name: Preparar script de notificación (nodemailer)
           when: always
           command: |
             npm init -y >/dev/null 2>&1 || true
             npm i nodemailer@6 >/dev/null 2>&1
-            cat > notify.js <<'EOF'
+            # OJO: en CircleCI 2.1 hay que escapar el heredoc con \<<
+            cat > notify.js \<<'EOF'
             const nodemailer = require('nodemailer');
 
-            // Variables de entorno requeridas
             const {
               GMAIL_USER,
               GMAIL_APP_PASSWORD,
@@ -87,13 +86,14 @@ jobs:
             } = process.env;
 
             if (!GMAIL_USER || !GMAIL_APP_PASSWORD || !EMAIL_TO) {
-              console.error('Faltan variables de entorno: GMAIL_USER, GMAIL_APP_PASSWORD o EMAIL_TO.');
-              process.exit(0); // no fallar el job por falta de notificación
+              console.error('Faltan variables: GMAIL_USER, GMAIL_APP_PASSWORD o EMAIL_TO.');
+              process.exit(0); // no romper el job por notificación
             }
 
-            const subject = `${STATUS.toUpperCase()}: ${CIRCLE_PROJECT_REPONAME} #${CIRCLE_BUILD_NUM}`;
+            const status = (STATUS || 'SUCCESS').toUpperCase();
+            const subject = `${status}: ${CIRCLE_PROJECT_REPONAME} #${CIRCLE_BUILD_NUM}`;
             const body = [
-              `Resultado: ${STATUS.toUpperCase()}`,
+              `Resultado: ${status}`,
               `Repositorio: ${CIRCLE_PROJECT_REPONAME}`,
               `Build: #${CIRCLE_BUILD_NUM}`,
               `Commit: ${CIRCLE_SHA1}`,
@@ -103,10 +103,7 @@ jobs:
             async function main() {
               const transporter = nodemailer.createTransport({
                 service: 'gmail',
-                auth: {
-                  user: GMAIL_USER,
-                  pass: GMAIL_APP_PASSWORD
-                }
+                auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD }
               });
 
               await transporter.sendMail({
@@ -121,23 +118,22 @@ jobs:
 
             main().catch(err => {
               console.error('Error enviando correo:', err.message);
-              process.exit(0); // no romper el pipeline por la notificación
+              process.exit(0);
             });
             EOF
 
-      # Éxito: solo si todo el job llegó OK
       - run:
           name: Notificar ÉXITO por email (Gmail)
           when: on_success
           command: |
-            node notify.js
+            STATUS=SUCCESS node notify.js
 
-      # Fallo: se ejecuta si algún paso del job falló
       - run:
           name: Notificar FALLO por email (Gmail)
           when: on_fail
           command: |
             STATUS=FAILURE node notify.js
+
 workflows:
   version: 2
   pipeline:
