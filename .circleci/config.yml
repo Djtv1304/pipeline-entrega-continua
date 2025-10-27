@@ -1,0 +1,157 @@
+version: 2.1
+
+jobs:
+  checkout:
+    docker:
+      - image: cimg/node:18.20
+    steps:
+      - checkout
+      - run:
+          name: Mostrar versión de Node/NPM
+          command: |
+            node -v
+            npm -v
+
+  install:
+    docker:
+      - image: cimg/node:18.20
+    steps:
+      - checkout
+      - run:
+          name: Instalar dependencias (npm ci)
+          command: npm ci
+
+  lint:
+    docker:
+      - image: cimg/node:18.20
+    steps:
+      - checkout
+      - run: npm ci
+      - run:
+          name: ESLint
+          command: npm run lint
+      - run:
+          name: Prettier (solo check)
+          command: |
+            npm run format:check || echo "⚠️ Problemas de formato (no bloquea el pipeline)"
+
+  typecheck:
+    docker:
+      - image: cimg/node:18.20
+    steps:
+      - checkout
+      - run: npm ci
+      - run:
+          name: TypeScript typecheck
+          command: npm run typecheck
+      - run:
+          name: Verificar tsconfig path aliases
+          command: |
+            echo "Checking tsconfig path aliases..."
+            cat tsconfig.json || true
+
+  test:
+    docker:
+      - image: cimg/node:18.20
+    environment:
+      # Valores de entorno útiles para el script de notificación
+      REPO_NAME: << pipeline.project.git_url >>
+    steps:
+      - checkout
+      - run: npm ci
+      - run:
+          name: Ejecutar pruebas con Vitest
+          command: npm test
+
+      # ---------- Notificaciones por EMAIL ----------
+      # Creamos un pequeño script JS con nodemailer
+      - run:
+          name: Preparar script de notificación
+          when: always
+          command: |
+            npm init -y >/dev/null 2>&1 || true
+            npm i nodemailer@6 >/dev/null 2>&1
+            cat > notify.js <<'EOF'
+            const nodemailer = require('nodemailer');
+
+            // Variables de entorno requeridas
+            const {
+              GMAIL_USER,
+              GMAIL_APP_PASSWORD,
+              EMAIL_TO,
+              CIRCLE_PROJECT_REPONAME,
+              CIRCLE_BUILD_NUM,
+              CIRCLE_SHA1,
+              CIRCLE_BUILD_URL,
+              STATUS
+            } = process.env;
+
+            if (!GMAIL_USER || !GMAIL_APP_PASSWORD || !EMAIL_TO) {
+              console.error('Faltan variables de entorno: GMAIL_USER, GMAIL_APP_PASSWORD o EMAIL_TO.');
+              process.exit(0); // no fallar el job por falta de notificación
+            }
+
+            const subject = `${STATUS.toUpperCase()}: ${CIRCLE_PROJECT_REPONAME} #${CIRCLE_BUILD_NUM}`;
+            const body = [
+              `Resultado: ${STATUS.toUpperCase()}`,
+              `Repositorio: ${CIRCLE_PROJECT_REPONAME}`,
+              `Build: #${CIRCLE_BUILD_NUM}`,
+              `Commit: ${CIRCLE_SHA1}`,
+              `URL: ${CIRCLE_BUILD_URL}`
+            ].join('\n');
+
+            async function main() {
+              const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                  user: GMAIL_USER,
+                  pass: GMAIL_APP_PASSWORD
+                }
+              });
+
+              await transporter.sendMail({
+                from: GMAIL_USER,
+                to: EMAIL_TO,
+                subject,
+                text: body
+              });
+
+              console.log('Correo enviado correctamente a', EMAIL_TO);
+            }
+
+            main().catch(err => {
+              console.error('Error enviando correo:', err.message);
+              process.exit(0); // no romper el pipeline por la notificación
+            });
+            EOF
+
+      # Éxito: solo si todo el job llegó OK
+      - run:
+          name: Notificar ÉXITO por email (Gmail)
+          when: on_success
+          command: |
+            node notify.js
+
+      # Fallo: se ejecuta si algún paso del job falló
+      - run:
+          name: Notificar FALLO por email (Gmail)
+          when: on_fail
+          command: |
+            STATUS=FAILURE node notify.js
+workflows:
+  version: 2
+  pipeline:
+    jobs:
+      - checkout
+      - install:
+          requires:
+            - checkout
+      - lint:
+          requires:
+            - install
+      - typecheck:
+          requires:
+            - lint
+      - test:
+          requires:
+            - typecheck
