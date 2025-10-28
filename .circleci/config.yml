@@ -16,7 +16,6 @@ jobs:
     docker:
       - image: cimg/node:18.20
     steps:
-      - checkout
       - run:
           name: Instalar dependencias (npm ci)
           command: npm ci
@@ -25,7 +24,6 @@ jobs:
     docker:
       - image: cimg/node:18.20
     steps:
-      - checkout
       - run: npm ci
       - run:
           name: ESLint
@@ -33,7 +31,7 @@ jobs:
       - run:
           name: Prettier (solo check)
           command: |
-            npm run format:check || echo "⚠️ Problemas de formato (no bloquea el pipeline)"
+            npm run format:check || echo " Problemas de formato (no bloquea el pipeline)"
 
   typecheck:
     docker:
