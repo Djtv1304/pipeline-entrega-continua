@@ -68,7 +68,7 @@ jobs:
           command: |
             npm init -y >/dev/null 2>&1 || true
             npm i nodemailer@6 >/dev/null 2>&1
-            \<<
+            # Hay que escapar el heredoc con \<<
             cat > notify.js \<<'EOF'
             const nodemailer = require('nodemailer');
 
