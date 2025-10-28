@@ -16,6 +16,7 @@ jobs:
     docker:
       - image: cimg/node:18.20
     steps:
+      - checkout
       - run:
           name: Instalar dependencias (npm ci)
           command: npm ci
@@ -24,6 +25,7 @@ jobs:
     docker:
       - image: cimg/node:18.20
     steps:
+      - checkout
       - run: npm ci
       - run:
           name: ESLint
@@ -31,7 +33,7 @@ jobs:
       - run:
           name: Prettier (solo check)
           command: |
-            npm run format:check || echo " Problemas de formato (no bloquea el pipeline)"
+            npm run format:check || echo "⚠️ Problemas de formato (no bloquea el pipeline)"
 
   typecheck:
     docker:
@@ -68,7 +70,7 @@ jobs:
           command: |
             npm init -y >/dev/null 2>&1 || true
             npm i nodemailer@6 >/dev/null 2>&1
-            # Hay que escapar el heredoc con \<<
+            # OJO: en CircleCI 2.1 hay que escapar el heredoc con \<<
             cat > notify.js \<<'EOF'
             const nodemailer = require('nodemailer');
 
