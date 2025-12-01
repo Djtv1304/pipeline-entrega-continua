@@ -17,8 +17,7 @@ spec:
     spec:
       containers:
         - name: nextjs-math-api
-          # Jenkins reemplazará este valor por DOCKER_USER/nextjs-math-api:TAG
-          image: DOCKER_USER/nextjs-math-api:latest
+          image: h7djtv/nextjs-math-api:latest
           ports:
             - containerPort: 3000
           env:
