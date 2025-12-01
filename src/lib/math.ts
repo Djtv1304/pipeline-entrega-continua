@@ -1,3 +1,5 @@
+import { isNewMathLogicEnabled } from '../launchDarkly';
+
 export function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
@@ -12,11 +14,30 @@ export function validatePayload(input: unknown): { a: number; b: number } {
   return { a, b } as { a: number; b: number };
 }
 
-export function addNumbers(a: number, b: number): number {
+export async function addNumbers(a: number, b: number, userKey = 'anonymous'): Promise<number | { result: number; message: string }> {
+
+  const enabled = await isNewMathLogicEnabled(userKey);
+
+  if (enabled) {
+    return {
+      result: a + b,
+      message: "✨ Patrocinado por LaunchDarkly - Feature Flag Activado"
+    };
+  }
+
   return a + b;
 }
 
-export function subtractNumbers(a: number, b: number): number {
+export async function subtractNumbers(a: number, b: number, userKey = 'anonymous'): Promise<number | { result: number; message: string }> {
+  const enabled = await isNewMathLogicEnabled(userKey);
+
+  if (enabled) {
+    return {
+      result: a - b,
+      message: "✨ Patrocinado por LaunchDarkly - Feature Flag Activado"
+    };
+  }
+
   return a - b;
 }
 

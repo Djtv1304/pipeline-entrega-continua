@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextjs-math-api
+  namespace: default
+  labels:
+    app: nextjs-math-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextjs-math-api
+  template:
+    metadata:
+      labels:
+        app: nextjs-math-api
+    spec:
+      containers:
+        - name: nextjs-math-api
+          # Jenkins reemplazará este valor por DOCKER_USER/nextjs-math-api:TAG
+          image: DOCKER_USER/nextjs-math-api:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: LD_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: launchdarkly-secret
+                  key: LD_SDK_KEY

@@ -13,8 +13,8 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { a, b } = validatePayload(body);
-    const result = addNumbers(a, b);
-    return NextResponse.json({ result }, { status: 200 });
+    const result = await addNumbers(a, b);
+    return NextResponse.json(typeof result === 'number' ? { result } : result, { status: 200 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error de solicitud";
     return NextResponse.json({ error: message }, { status: 400 });
