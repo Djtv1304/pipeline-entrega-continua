@@ -4,7 +4,7 @@ import { init, LDClient } from '@launchdarkly/node-server-sdk';
 const sdkKey = process.env.LD_SDK_KEY;
 
 if (!sdkKey) {
-  console.warn('LD_SDK_KEY no está definido. LaunchDarkly se ejecutará desactivado.');
+  console.warn('LD_SDK_KEY no está definido. LaunchDarkly.');
 }
 
 export const ldClient: LDClient | null = sdkKey ? init(sdkKey) : null;
